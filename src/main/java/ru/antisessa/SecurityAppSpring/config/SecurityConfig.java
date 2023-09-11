@@ -6,6 +6,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import ru.antisessa.SecurityAppSpring.services.PersonDetailsService;
@@ -23,26 +24,34 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     // Настраиваем сам Spring Security и авторизацию
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.csrf().disable()
-                .authorizeRequests()
+        //отключение подделки межстраничных запросов
+        http.csrf().disable();
+
+        //настройка прав доступа для не авторизированных пользователей
+        http.authorizeRequests()
                 .antMatchers("/auth/login", "/error", "/auth/registration").permitAll()
-                .anyRequest().authenticated()
-                .and()
-                .formLogin().loginPage("/auth/login")
+                .anyRequest().authenticated();
+
+        //настройка custom страницы авторизации
+        http.formLogin().loginPage("/auth/login")
                 .loginProcessingUrl("/process_login")
                 .defaultSuccessUrl("/hello", true)
                 .failureUrl("/auth/login?error");
+
+        //настройка выхода из учетной записи
+        http.logout().logoutUrl("/logout").logoutSuccessUrl("/auth/login");
     }
 
     // Настраивает аутентификацию
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(personDetailsService);
+        auth.userDetailsService(personDetailsService)
+                .passwordEncoder(getPasswordEncoder());
     }
 
     //Настраиваем шифрование паролей
     @Bean
     public PasswordEncoder getPasswordEncoder(){
-        return NoOpPasswordEncoder.getInstance();
+        return new BCryptPasswordEncoder();
     }
 }

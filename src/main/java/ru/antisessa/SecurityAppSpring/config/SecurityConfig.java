@@ -3,6 +3,7 @@ package ru.antisessa.SecurityAppSpring.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -12,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import ru.antisessa.SecurityAppSpring.services.PersonDetailsService;
 
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final PersonDetailsService personDetailsService;
@@ -24,10 +26,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     // Настраиваем сам Spring Security и авторизацию
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+
         //настройка прав доступа для не авторизированных пользователей
         http.authorizeRequests()
                 .antMatchers("/auth/login", "/error", "/auth/registration").permitAll()
-                .anyRequest().authenticated();
+                .anyRequest().hasAnyRole("USER", "ADMIN");
 
         //настройка custom страницы авторизации
         http.formLogin().loginPage("/auth/login")
